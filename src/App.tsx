@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useRef, useState } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { TutorialContentRenderer } from '@/components/TutorialContent';
 import { tutorials, getTutorial } from '@/data/tutorials';
@@ -40,6 +40,17 @@ function App() {
   const closeSearch = () => {
     setSearchQuery('');
     setShowSearch(false);
+  };
+
+  const handleSearchKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && filteredTutorials.length > 0) {
+      handleSelectTutorial(filteredTutorials[0].id);
+      closeSearch();
+    }
+
+    if (e.key === 'Escape') {
+      setShowSearch(false);
+    }
   };
 
   // Handle escape key to close sidebar
@@ -85,6 +96,7 @@ function App() {
   );
   const trimmedSearchQuery = searchQuery.trim();
   const hasSearchResults = trimmedSearchQuery.length > 0;
+  const searchInputClassName = 'w-full sm:w-72 lg:w-80 bg-white/5 border-dashed border-white/10 text-white placeholder:text-white/30 focus:border-white/20 font-mono-space text-sm';
 
   const marqueeItems = [
     'GitDocs+',
@@ -147,10 +159,14 @@ function App() {
       {/* Main Content */}
       <div className="lg:ml-72 min-h-screen flex flex-col pt-[33px]">
         {/* Header */}
-        <header className="sticky top-[33px] z-30 bg-black/90 backdrop-blur-md" style={{ borderBottom: '1px dashed rgba(255,255,255,0.1)' }}>
-          <div className="flex items-center justify-between px-5 py-3">
+        <header
+          ref={searchContainerRef}
+          className="sticky top-[33px] z-30 bg-black/90 backdrop-blur-md"
+          style={{ borderBottom: '1px dashed rgba(255,255,255,0.1)' }}
+        >
+          <div className="flex items-center justify-between gap-3 px-5 py-3">
             {/* Left: Mobile Menu */}
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <Button
                 variant="ghost"
                 size="icon"
@@ -161,7 +177,7 @@ function App() {
               </Button>
 
               {/* Search */}
-              <div ref={searchContainerRef} className="relative">
+              <div className="relative hidden sm:block">
                 {showSearch ? (
                   <div className="flex items-center gap-2 animate-fade-in">
                     <Input
@@ -169,18 +185,9 @@ function App() {
                       placeholder="Search documentation..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-[min(18rem,calc(100vw-9rem))] sm:w-72 lg:w-80 bg-white/5 border-dashed border-white/10 text-white placeholder:text-white/30 focus:border-white/20 font-mono-space text-sm"
+                      className={searchInputClassName}
                       autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && filteredTutorials.length > 0) {
-                          handleSelectTutorial(filteredTutorials[0].id);
-                          closeSearch();
-                        }
-
-                        if (e.key === 'Escape') {
-                          setShowSearch(false);
-                        }
-                      }}
+                      onKeyDown={handleSearchKeyDown}
                     />
                     <Button
                       variant="ghost"
@@ -205,7 +212,7 @@ function App() {
                 {/* Search Results Dropdown */}
                 {hasSearchResults && showSearch && (
                   <div
-                    className="absolute top-full left-0 mt-2 w-[min(26rem,calc(100vw-2.5rem))] sm:w-[30rem] max-w-[calc(100vw-2.5rem)] overflow-hidden bg-black/95 backdrop-blur-md border border-dashed animate-scale-in shadow-[0_24px_80px_rgba(0,0,0,0.55)] z-50"
+                    className="absolute top-full left-0 mt-2 w-[30rem] max-w-[calc(100vw-2.5rem)] overflow-hidden bg-black/95 backdrop-blur-md border border-dashed animate-scale-in shadow-[0_24px_80px_rgba(0,0,0,0.55)] z-50"
                     style={{ borderColor: 'rgba(255,255,255,0.12)' }}
                   >
                     <div
@@ -254,7 +261,20 @@ function App() {
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowSearch((current) => !current)}
+                className="sm:hidden hover:bg-white/5 group"
+                aria-label={showSearch ? 'Close search' : 'Open search'}
+              >
+                {showSearch ? (
+                  <X className="w-4 h-4 transition-all group-hover:rotate-90" style={{ color: 'rgba(255,255,255,0.45)' }} />
+                ) : (
+                  <Search className="w-4 h-4 transition-all group-hover:scale-110" style={{ color: 'rgba(255,255,255,0.4)' }} />
+                )}
+              </Button>
               <a
                 href="https://www.linkedin.com/in/chirag-pareek-369b4b265/"
                 target="_blank"
@@ -277,6 +297,80 @@ function App() {
               </a>
             </div>
           </div>
+
+          {showSearch && (
+            <div className="border-t border-dashed border-white/10 px-5 pb-3 pt-3 sm:hidden">
+              <div className="relative animate-fade-in">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Search documentation..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={searchInputClassName}
+                    autoFocus
+                    onKeyDown={handleSearchKeyDown}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white/40 hover:text-white/80 hover:bg-white/5 font-mono-space text-xs tracking-wider"
+                    onClick={closeSearch}
+                  >
+                    CLOSE
+                  </Button>
+                </div>
+
+                {hasSearchResults && (
+                  <div
+                    className="mt-2 w-full overflow-hidden bg-black/95 backdrop-blur-md border border-dashed animate-scale-in shadow-[0_24px_80px_rgba(0,0,0,0.55)] z-50"
+                    style={{ borderColor: 'rgba(255,255,255,0.12)' }}
+                  >
+                    <div
+                      className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] uppercase tracking-[0.18em] font-mono-space"
+                      style={{ borderBottom: '1px dashed rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.45)' }}
+                    >
+                      <span>
+                        {filteredTutorials.length} result{filteredTutorials.length === 1 ? '' : 's'}
+                      </span>
+                      <span>Enter opens top match</span>
+                    </div>
+                    <div className="max-h-[min(60vh,26rem)] overflow-y-auto overscroll-contain">
+                      {filteredTutorials.length > 0 ? (
+                        filteredTutorials.map((tutorial, idx) => (
+                          <button
+                            key={tutorial.id}
+                            onClick={() => {
+                              handleSelectTutorial(tutorial.id);
+                              closeSearch();
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-white/5 transition-all duration-200 group"
+                            style={{ borderBottom: idx < filteredTutorials.length - 1 ? '1px dashed rgba(255,255,255,0.08)' : 'none' }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <span className="num-label">{String(idx + 1).padStart(2, '0')}</span>
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium text-sm leading-5" style={{ color: 'rgba(255,255,255,0.88)' }}>
+                                  {tutorial.title}
+                                </div>
+                                <div className="mt-1 text-xs leading-5 line-clamp-2" style={{ color: 'rgba(255,255,255,0.42)' }}>
+                                  {tutorial.description}
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-4 text-sm font-mono-space" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                          No results found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </header>
 
         {/* Content Area */}
