@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { TutorialContentRenderer } from '@/components/TutorialContent';
 import { tutorials, getTutorial } from '@/data/tutorials';
@@ -14,6 +14,7 @@ function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let current = 0;
@@ -36,16 +37,45 @@ function App() {
     setSidebarOpen(false);
   };
 
+  const closeSearch = () => {
+    setSearchQuery('');
+    setShowSearch(false);
+  };
+
   // Handle escape key to close sidebar
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSidebarOpen(false);
+        setShowSearch(false);
       }
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, []);
+
+  useEffect(() => {
+    if (!showSearch) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setShowSearch(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+    };
+  }, [showSearch]);
 
   // Filter tutorials based on search
   const filteredTutorials = Object.values(tutorials).filter(
@@ -53,6 +83,8 @@ function App() {
       tutorial.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tutorial.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const trimmedSearchQuery = searchQuery.trim();
+  const hasSearchResults = trimmedSearchQuery.length > 0;
 
   const marqueeItems = [
     'GitDocs+',
@@ -129,7 +161,7 @@ function App() {
               </Button>
 
               {/* Search */}
-              <div className="relative">
+              <div ref={searchContainerRef} className="relative">
                 {showSearch ? (
                   <div className="flex items-center gap-2 animate-fade-in">
                     <Input
@@ -137,20 +169,24 @@ function App() {
                       placeholder="Search documentation..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-48 sm:w-64 bg-white/5 border-dashed border-white/10 text-white placeholder:text-white/30 focus:border-white/20 font-mono-space text-sm"
+                      className="w-[min(18rem,calc(100vw-9rem))] sm:w-72 lg:w-80 bg-white/5 border-dashed border-white/10 text-white placeholder:text-white/30 focus:border-white/20 font-mono-space text-sm"
                       autoFocus
-                      onBlur={() => {
-                        if (!searchQuery) setShowSearch(false);
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && filteredTutorials.length > 0) {
+                          handleSelectTutorial(filteredTutorials[0].id);
+                          closeSearch();
+                        }
+
+                        if (e.key === 'Escape') {
+                          setShowSearch(false);
+                        }
                       }}
                     />
                     <Button
                       variant="ghost"
                       size="sm"
                       className="text-white/40 hover:text-white/80 hover:bg-white/5 font-mono-space text-xs tracking-wider"
-                      onClick={() => {
-                        setSearchQuery('');
-                        setShowSearch(false);
-                      }}
+                      onClick={closeSearch}
                     >
                       ESC
                     </Button>
@@ -167,32 +203,51 @@ function App() {
                 )}
 
                 {/* Search Results Dropdown */}
-                {searchQuery && showSearch && (
-                  <div className="absolute top-full left-0 mt-2 w-80 bg-black border border-dashed animate-scale-in" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
-                    {filteredTutorials.length > 0 ? (
-                      filteredTutorials.map((tutorial, idx) => (
-                        <button
-                          key={tutorial.id}
-                          onClick={() => {
-                            handleSelectTutorial(tutorial.id);
-                            setSearchQuery('');
-                            setShowSearch(false);
-                          }}
-                          className="w-full text-left px-4 py-3 hover:bg-white/5 transition-all duration-200 group"
-                          style={{ borderBottom: idx < filteredTutorials.length - 1 ? '1px dashed rgba(255,255,255,0.08)' : 'none' }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="num-label">{String(idx + 1).padStart(2, '0')}</span>
-                            <div>
-                              <div className="font-medium text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>{tutorial.title}</div>
-                              <div className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>{tutorial.description}</div>
+                {hasSearchResults && showSearch && (
+                  <div
+                    className="absolute top-full left-0 mt-2 w-[min(26rem,calc(100vw-2.5rem))] sm:w-[30rem] max-w-[calc(100vw-2.5rem)] overflow-hidden bg-black/95 backdrop-blur-md border border-dashed animate-scale-in shadow-[0_24px_80px_rgba(0,0,0,0.55)] z-50"
+                    style={{ borderColor: 'rgba(255,255,255,0.12)' }}
+                  >
+                    <div
+                      className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] uppercase tracking-[0.18em] font-mono-space"
+                      style={{ borderBottom: '1px dashed rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.45)' }}
+                    >
+                      <span>
+                        {filteredTutorials.length} result{filteredTutorials.length === 1 ? '' : 's'}
+                      </span>
+                      <span>Enter opens top match</span>
+                    </div>
+                    <div className="max-h-[min(60vh,26rem)] overflow-y-auto overscroll-contain">
+                      {filteredTutorials.length > 0 ? (
+                        filteredTutorials.map((tutorial, idx) => (
+                          <button
+                            key={tutorial.id}
+                            onClick={() => {
+                              handleSelectTutorial(tutorial.id);
+                              closeSearch();
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-white/5 transition-all duration-200 group"
+                            style={{ borderBottom: idx < filteredTutorials.length - 1 ? '1px dashed rgba(255,255,255,0.08)' : 'none' }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <span className="num-label">{String(idx + 1).padStart(2, '0')}</span>
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium text-sm leading-5" style={{ color: 'rgba(255,255,255,0.88)' }}>
+                                  {tutorial.title}
+                                </div>
+                                <div className="mt-1 text-xs leading-5 line-clamp-2" style={{ color: 'rgba(255,255,255,0.42)' }}>
+                                  {tutorial.description}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-3 text-sm font-mono-space" style={{ color: 'rgba(255,255,255,0.3)' }}>No results found</div>
-                    )}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-4 text-sm font-mono-space" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                          No results found
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
