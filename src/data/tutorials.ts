@@ -37,6 +37,8 @@ export const categories: Category[] = [
       { id: 'what-is-git', title: 'What is Git' },
       { id: 'why-git', title: 'Why Git for Your Organization' },
       { id: 'install-git', title: 'Install Git' },
+      { id: 'git-config-guide', title: 'Git Config Essentials' },
+      { id: 'gitignore-guide', title: 'Git Ignore (.gitignore)' },
       { id: 'git-ssh', title: 'Git SSH' },
       { id: 'git-cheat-sheet', title: 'Git Cheat Sheet' },
     ],
@@ -48,6 +50,7 @@ export const categories: Category[] = [
       { id: 'setting-up-repository', title: 'Setting up a Repository' },
       { id: 'saving-changes', title: 'Saving Changes' },
       { id: 'inspecting-repository', title: 'Inspecting a Repository' },
+      { id: 'commit-history-and-reusing-commits', title: 'See All Commits & Reuse a Commit' },
       { id: 'undoing-changes', title: 'Undoing Changes' },
       { id: 'rewriting-history', title: 'Rewriting History' },
     ],
@@ -58,6 +61,7 @@ export const categories: Category[] = [
     tutorials: [
       { id: 'syncing', title: 'Syncing (git remote)' },
       { id: 'using-branches', title: 'Using Branches' },
+      { id: 'resolving-merge-conflicts', title: 'Resolving Merge Conflicts' },
       { id: 'making-pull-request', title: 'Making a Pull Request' },
       { id: 'comparing-workflows', title: 'Comparing Workflows' },
     ],
@@ -69,6 +73,10 @@ export const categories: Category[] = [
       { id: 'merging-vs-rebasing', title: 'Merging vs. Rebasing' },
       { id: 'reset-checkout-revert', title: 'Reset, Checkout, and Revert' },
       { id: 'advanced-git-log', title: 'Advanced Git Log' },
+      { id: 'git-worktree-sparse-checkout', title: 'Git Worktree & Sparse Checkout' },
+      { id: 'git-search-and-inspect', title: 'Git Search & Inspect Tools' },
+      { id: 'git-patches-notes-maintenance', title: 'Patches, Notes & Maintenance' },
+      { id: 'gitattributes-aliases-large-repos', title: 'Attributes, Aliases & Large Repos' },
       { id: 'git-hooks', title: 'Git Hooks' },
       { id: 'git-submodules', title: 'Git Submodules' },
       { id: 'git-cherry-pick', title: 'Git Cherry Pick' },
@@ -565,8 +573,17 @@ git remote -v
 # Add a remote
 git remote add origin https://github.com/user/repo.git
 
+# Rename a remote
+git remote rename origin upstream
+
+# Change a remote URL
+git remote set-url origin https://github.com/user/new-repo.git
+
 # Remove a remote
-git remote remove origin`,
+git remote remove origin
+
+# Remove stale remote-tracking branches
+git remote prune origin`,
         language: 'bash',
       },
       {
@@ -624,6 +641,9 @@ git push
 
 # Push specific branch
 git push origin main
+
+# First push for a new branch and set upstream
+git push -u origin feature/login
 
 # Push all branches
 git push --all origin
@@ -910,6 +930,8 @@ git reset --hard <commit>   # Reset to commit (dangerous!)`,
           'git config --global user.name - Set global username',
           'git config --global user.email - Set global email',
           'git config --list - Show all settings',
+          'git config --global core.editor - Set your default editor',
+          'git config --global pull.rebase - Choose merge or rebase on pull',
         ],
       },
       {
@@ -923,6 +945,9 @@ git reset --hard <commit>   # Reset to commit (dangerous!)`,
           'git clone - Clone an existing repository',
           'git status - Check repository status',
           'git log - View commit history',
+          'git worktree - Open multiple branches in separate folders',
+          'git archive - Export a zip or tar from a commit or tag',
+          'git sparse-checkout - Check out only part of a repository',
         ],
       },
       {
@@ -937,6 +962,7 @@ git reset --hard <commit>   # Reset to commit (dangerous!)`,
           'git push - Upload to remote',
           'git pull - Download from remote',
           'git fetch - Download without merging',
+          'git push -u - Push and set upstream tracking in one step',
         ],
       },
       {
@@ -951,6 +977,7 @@ git reset --hard <commit>   # Reset to commit (dangerous!)`,
           'git merge - Combine branches',
           'git rebase - Replay commits on another branch',
           'git cherry-pick - Apply specific commits',
+          'git rerere - Reuse recorded conflict resolutions',
         ],
       },
       {
@@ -964,6 +991,7 @@ git reset --hard <commit>   # Reset to commit (dangerous!)`,
           'git revert - Create undo commit',
           'git checkout -- - Discard changes',
           'git clean - Remove untracked files',
+          'git apply - Apply a patch to your working directory',
         ],
       },
       {
@@ -978,6 +1006,19 @@ git reset --hard <commit>   # Reset to commit (dangerous!)`,
           'git bisect - Binary search for bugs',
           'git blame - Show line annotations',
           'git diff - Show differences',
+          'git shortlog - Summarize commits grouped by author',
+          'git describe - Name a commit based on the nearest tag',
+          'git notes - Attach notes to commits without changing them',
+          'git gc - Optimize the repository',
+          'git fsck - Verify repository integrity',
+          'git bundle - Package commits into a single file',
+          'git format-patch - Export commits as patch files',
+          'git am - Apply email-style patch files as commits',
+          'git ls-files - List tracked files',
+          'git ls-tree - Inspect a commit tree',
+          'git cat-file - Inspect raw Git objects',
+          'git rev-parse - Turn a ref into an exact commit hash',
+          'git grep - Search tracked files with Git awareness',
         ],
       },
     ],
@@ -1394,11 +1435,23 @@ git log --grep="bug fix"`,
         code: `# Show commits affecting a file
 git log -- filename.txt
 
+# Track a file across renames
+git log --follow -- filename.txt
+
 # Show detailed changes for a file
 git log -p -- filename.txt
 
 # Show statistics for a file
-git log --stat -- filename.txt`,
+git log --stat -- filename.txt
+
+# Find commits that added or removed a string
+git log -S "loginButton" -- source-file.ts
+
+# Show only merge commits
+git log --merges
+
+# Show everything except merge commits
+git log --no-merges`,
         language: 'bash',
       },
     ],
@@ -1859,6 +1912,559 @@ git restore --source HEAD~2 file.txt`,
         language: 'bash'
       }
     ]
+  },
+  'git-config-guide': {
+    id: 'git-config-guide',
+    title: 'Git Config Essentials',
+    category: 'Beginner',
+    description: 'Set up Git in a practical way for daily development.',
+    content: [
+      {
+        type: 'paragraph',
+        content: 'The git config command controls how Git behaves on your machine and inside a specific repository. A small amount of setup at the start makes Git much easier to use every day.',
+      },
+      {
+        type: 'heading',
+        content: 'Good Starter Setup',
+      },
+      {
+        type: 'code',
+        code: `# Identity for your commits
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+
+# Choose your editor
+git config --global core.editor "code --wait"
+
+# Pick your pull style
+git config --global pull.rebase false
+
+# Helpful defaults
+git config --global init.defaultBranch main
+git config --global color.ui auto`,
+        language: 'bash',
+      },
+      {
+        type: 'heading',
+        content: 'Line Ending Settings',
+      },
+      {
+        type: 'code',
+        code: `# Windows
+git config --global core.autocrlf true
+
+# macOS / Linux
+git config --global core.autocrlf input`,
+        language: 'bash',
+      },
+      {
+        type: 'warning',
+        content: 'Do not copy someone else\'s core.autocrlf setting blindly. Teams should agree on a line-ending strategy, especially when Windows and Linux are both involved.',
+      },
+      {
+        type: 'heading',
+        content: 'Useful Aliases',
+      },
+      {
+        type: 'code',
+        code: `git config --global alias.st "status -sb"
+git config --global alias.lg "log --oneline --graph --decorate --all"
+git config --global alias.last "log -1 HEAD"`,
+        language: 'bash',
+      },
+      {
+        type: 'tip',
+        content: 'Use git config --global --edit to open your full Git config file. Use the same command without --global if you want settings only for the current repository.',
+      },
+    ],
+  },
+  'gitignore-guide': {
+    id: 'gitignore-guide',
+    title: 'Git Ignore (.gitignore)',
+    category: 'Beginner',
+    description: 'Learn how to ignore files that should not be committed.',
+    content: [
+      {
+        type: 'paragraph',
+        content: 'A .gitignore file tells Git which untracked files and folders it should ignore. This is commonly used for build output, secrets, dependency folders, logs, and editor-generated files.',
+      },
+      {
+        type: 'heading',
+        content: 'Common .gitignore Example',
+      },
+      {
+        type: 'code',
+        code: `# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+
+# OS or editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/`,
+        language: 'bash',
+      },
+      {
+        type: 'heading',
+        content: 'Useful Pattern Rules',
+      },
+      {
+        type: 'list',
+        items: [
+          '*.log ignores every .log file',
+          'dist/ ignores a whole folder',
+          '!important.log unignores a file that was previously ignored',
+          'config/*.local ignores matching files inside one folder',
+        ],
+      },
+      {
+        type: 'heading',
+        content: 'If a File Is Already Tracked',
+      },
+      {
+        type: 'paragraph',
+        content: '.gitignore only affects untracked files. If you already committed a file, you must stop tracking it once and then commit that removal from the index.',
+      },
+      {
+        type: 'code',
+        code: `# Keep the file locally, but stop tracking it in Git
+git rm --cached .env
+
+# Commit the change
+git commit -m "Stop tracking local env file"`,
+        language: 'bash',
+      },
+      {
+        type: 'tip',
+        content: 'In real projects, a clean .gitignore prevents accidental commits of secrets, generated files, and local machine noise.',
+      },
+    ],
+  },
+  'commit-history-and-reusing-commits': {
+    id: 'commit-history-and-reusing-commits',
+    title: 'See All Commits & Reuse a Commit',
+    category: 'Getting Started',
+    description: 'View full commit history and safely bring a specific commit or file into your local work.',
+    content: [
+      {
+        type: 'paragraph',
+        content: 'A very common real-world task is: find an old commit, inspect it, and bring that change back into your current work. Git gives you a few safe ways to do that depending on whether you want the whole commit or just one file.',
+      },
+      {
+        type: 'heading',
+        content: 'See All Commits',
+      },
+      {
+        type: 'code',
+        code: `# Compact history for all branches
+git log --all --oneline --graph --decorate
+
+# Detailed history
+git log --all
+
+# Show one commit in full detail
+git show abc1234`,
+        language: 'bash',
+      },
+      {
+        type: 'heading',
+        content: 'Find the Commit You Need',
+      },
+      {
+        type: 'code',
+        code: `# Search commit messages
+git log --all --grep="login fix"
+
+# Search by author
+git log --all --author="Asha"
+
+# Turn a ref into the exact hash
+git rev-parse HEAD`,
+        language: 'bash',
+      },
+      {
+        type: 'heading',
+        content: 'Bring a Whole Commit Into Your Branch',
+      },
+      {
+        type: 'code',
+        code: `# First make sure you have the latest remote history
+git fetch origin
+
+# Apply that commit on top of your current branch
+git cherry-pick abc1234
+
+# Apply it without committing yet
+git cherry-pick --no-commit abc1234`,
+        language: 'bash',
+      },
+      {
+        type: 'heading',
+        content: 'Bring Back Just One File From a Commit',
+      },
+      {
+        type: 'code',
+        code: `# Restore a file from an older commit into your working tree
+git restore --source abc1234 -- src/App.tsx
+
+# Older but still common syntax
+git checkout abc1234 -- src/App.tsx`,
+        language: 'bash',
+      },
+      {
+        type: 'info',
+        content: 'There is no direct git pull <commit> command. In day-to-day industry work, people usually fetch, inspect, then cherry-pick a commit or restore a file from that commit.',
+      },
+      {
+        type: 'tip',
+        content: 'If you only want to look around without moving your branch, use git switch --detach <commit-hash> and return later with git switch -.',
+      },
+    ],
+  },
+  'resolving-merge-conflicts': {
+    id: 'resolving-merge-conflicts',
+    title: 'Resolving Merge Conflicts',
+    category: 'Collaborating',
+    description: 'Handle merge and rebase conflicts step by step without panic.',
+    content: [
+      {
+        type: 'paragraph',
+        content: 'Merge conflicts happen when Git cannot automatically decide which change to keep. This is normal on active teams. The key is to inspect the conflicting files calmly, choose the right final code, and continue the operation.',
+      },
+      {
+        type: 'heading',
+        content: 'What a Conflict Looks Like',
+      },
+      {
+        type: 'code',
+        code: `<<<<<<< HEAD
+const buttonText = "Save";
+=======
+const buttonText = "Save changes";
+>>>>>>> feature/button-copy`,
+        language: 'bash',
+      },
+      {
+        type: 'paragraph',
+        content: 'Delete the conflict markers, keep the final version you want, save the file, and then stage it.',
+      },
+      {
+        type: 'heading',
+        content: 'Basic Conflict Workflow',
+      },
+      {
+        type: 'code',
+        code: `# See what is conflicted
+git status
+
+# After editing the files, stage them
+git add .
+
+# Continue the operation
+git merge --continue
+
+# If you were rebasing instead
+git rebase --continue`,
+        language: 'bash',
+      },
+      {
+        type: 'heading',
+        content: 'Useful Conflict Commands',
+      },
+      {
+        type: 'code',
+        code: `# List only unmerged files
+git diff --name-only --diff-filter=U
+
+# Keep your version for a file
+git checkout --ours path/to/file
+
+# Keep the incoming version for a file
+git checkout --theirs path/to/file
+
+# Abort if you want to start over
+git merge --abort
+git rebase --abort`,
+        language: 'bash',
+      },
+      {
+        type: 'tip',
+        content: 'Resolve conflicts with context, not blindly. Before choosing ours or theirs, read the code and understand which version matches the feature, bug fix, or release you are shipping.',
+      },
+    ],
+  },
+  'git-worktree-sparse-checkout': {
+    id: 'git-worktree-sparse-checkout',
+    title: 'Git Worktree & Sparse Checkout',
+    category: 'Advanced',
+    description: 'Use multiple branches at once and check out only the folders you need.',
+    content: [
+      {
+        type: 'paragraph',
+        content: 'These two commands are especially useful in large repositories. git worktree lets you open multiple branches in separate folders at the same time, while git sparse-checkout lets you keep only part of the repository in your working directory.',
+      },
+      {
+        type: 'heading',
+        content: 'git worktree',
+      },
+      {
+        type: 'code',
+        code: `# Create a second working folder for a branch
+git worktree add ../repo-login feature/login
+
+# List active worktrees
+git worktree list
+
+# Remove a worktree when done
+git worktree remove ../repo-login`,
+        language: 'bash',
+      },
+      {
+        type: 'paragraph',
+        content: 'This is great when you need to keep one branch running for testing while you work on another branch in parallel.',
+      },
+      {
+        type: 'heading',
+        content: 'git sparse-checkout',
+      },
+      {
+        type: 'code',
+        code: `# Turn on sparse checkout
+git sparse-checkout init --cone
+
+# Keep only selected folders
+git sparse-checkout set app docs
+
+# Add another folder later
+git sparse-checkout add scripts
+
+# Return to full checkout
+git sparse-checkout disable`,
+        language: 'bash',
+      },
+      {
+        type: 'tip',
+        content: 'In monorepos, worktree plus sparse-checkout is often much faster than keeping several full clones of the same repository.',
+      },
+    ],
+  },
+  'git-search-and-inspect': {
+    id: 'git-search-and-inspect',
+    title: 'Git Search & Inspect Tools',
+    category: 'Advanced',
+    description: 'Search tracked files and inspect Git objects, trees, and commit metadata.',
+    content: [
+      {
+        type: 'paragraph',
+        content: 'Git has several built-in commands for searching code and inspecting repository internals. They look advanced, but many of them are very practical once you know the basics.',
+      },
+      {
+        type: 'heading',
+        content: 'Search Tracked Files',
+      },
+      {
+        type: 'code',
+        code: `# Search tracked files for text
+git grep "useEffect"
+
+# Show line numbers
+git grep -n "TODO"
+
+# Search inside an older revision
+git grep "API_KEY" HEAD~3`,
+        language: 'bash',
+      },
+      {
+        type: 'heading',
+        content: 'Inspect What Git Knows',
+      },
+      {
+        type: 'code',
+        code: `# List tracked files
+git ls-files
+
+# Show the file tree of the current commit
+git ls-tree -r --name-only HEAD
+
+# Turn a ref into an exact hash
+git rev-parse HEAD
+
+# Print the contents of a Git object
+git cat-file -p HEAD`,
+        language: 'bash',
+      },
+      {
+        type: 'heading',
+        content: 'Summaries That Help',
+      },
+      {
+        type: 'code',
+        code: `# Commits grouped by author
+git shortlog -sn
+
+# Name a commit from the nearest tag
+git describe --tags --always`,
+        language: 'bash',
+      },
+      {
+        type: 'tip',
+        content: 'Commands like git shortlog, git describe, git rev-parse, and git ls-tree are used a lot in scripts, release pipelines, and debugging sessions.',
+      },
+    ],
+  },
+  'git-patches-notes-maintenance': {
+    id: 'git-patches-notes-maintenance',
+    title: 'Patches, Notes & Maintenance',
+    category: 'Advanced',
+    description: 'Export patches, attach notes, reuse conflict fixes, and maintain repository health.',
+    content: [
+      {
+        type: 'paragraph',
+        content: 'These commands are less common for beginners, but they are very useful in professional workflows involving code review, release engineering, offline transfer, or repository maintenance.',
+      },
+      {
+        type: 'heading',
+        content: 'Patches and Patch Application',
+      },
+      {
+        type: 'code',
+        code: `# Export the last two commits as patch files
+git format-patch -2
+
+# Apply mailbox-style patches as commits
+git am 0001-some-change.patch
+
+# Apply a patch to the working tree without creating a commit
+git apply fix.patch`,
+        language: 'bash',
+      },
+      {
+        type: 'heading',
+        content: 'Archive and Bundle',
+      },
+      {
+        type: 'code',
+        code: `# Export the current commit as a zip
+git archive --format=zip --output=release.zip HEAD
+
+# Package branch history into one file
+git bundle create repo.bundle main`,
+        language: 'bash',
+      },
+      {
+        type: 'heading',
+        content: 'Notes and Conflict Memory',
+      },
+      {
+        type: 'code',
+        code: `# Add a note to a commit
+git notes add -m "Released to staging"
+
+# Show notes for a commit
+git notes show HEAD
+
+# Enable reuse recorded resolution
+git config --global rerere.enabled true`,
+        language: 'bash',
+      },
+      {
+        type: 'heading',
+        content: 'Repository Health',
+      },
+      {
+        type: 'code',
+        code: `# Clean up and optimize local storage
+git gc
+
+# Check repository integrity
+git fsck --full`,
+        language: 'bash',
+      },
+      {
+        type: 'warning',
+        content: 'Most teams do not run git gc or git fsck every day. Use them when you have a specific reason, such as repository cleanup, corruption checks, or support/debugging work.',
+      },
+    ],
+  },
+  'gitattributes-aliases-large-repos': {
+    id: 'gitattributes-aliases-large-repos',
+    title: 'Attributes, Aliases & Large Repos',
+    category: 'Advanced',
+    description: 'Control file behavior, create shortcuts, and work more efficiently in big repositories.',
+    content: [
+      {
+        type: 'paragraph',
+        content: '.gitattributes helps Git treat files correctly, aliases save time, and a few large-repo habits can make monorepos much easier to handle.',
+      },
+      {
+        type: 'heading',
+        content: '.gitattributes Basics',
+      },
+      {
+        type: 'code',
+        code: `# Normalize text files
+* text=auto
+
+# Force LF on shell scripts
+*.sh text eol=lf
+
+# Force CRLF on batch files
+*.bat text eol=crlf
+
+# Mark binary files
+*.png binary
+*.jpg binary`,
+        language: 'bash',
+      },
+      {
+        type: 'paragraph',
+        content: 'This is especially helpful for cross-platform teams because it reduces noisy line-ending diffs and prevents Git from trying to merge binary files as text.',
+      },
+      {
+        type: 'heading',
+        content: 'Git Aliases',
+      },
+      {
+        type: 'code',
+        code: `git config --global alias.st "status -sb"
+git config --global alias.lg "log --oneline --graph --decorate --all"
+git config --global alias.co checkout`,
+        language: 'bash',
+      },
+      {
+        type: 'paragraph',
+        content: 'After that, you can run git st, git lg, and git co instead of typing the longer commands every time.',
+      },
+      {
+        type: 'heading',
+        content: 'Large Repo Basics',
+      },
+      {
+        type: 'code',
+        code: `# Faster partial clone for very large repos
+git clone --filter=blob:none <repo-url>
+
+# Then keep only the folders you need
+git sparse-checkout init --cone
+git sparse-checkout set apps/web docs`,
+        language: 'bash',
+      },
+      {
+        type: 'tip',
+        content: 'In industry, large repositories are usually handled with a mix of partial clone, sparse-checkout, worktrees, and strong ignore/attribute rules rather than extra manual copying.',
+      },
+    ],
   }
 };
 
